@@ -1,17 +1,932 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Voice Agent Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SRE AI Voice Agent Console</title>
+    <!-- Import Google Fonts (Outfit and Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+      :root {
+        --bg-color: #08080a;
+        --card-bg: rgba(18, 18, 24, 0.75);
+        --card-border: rgba(255, 255, 255, 0.08);
+        --text-primary: #f3f4f6;
+        --text-secondary: #9ca3af;
+        --accent-blue: #00d2ff;
+        --accent-purple: #9d4edd;
+        --accent-emerald: #10b981;
+        --accent-rose: #f43f5e;
+        --accent-glow: rgba(0, 210, 255, 0.15);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* Animated glowing mesh background */
+      body::before {
+        content: "";
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(0, 210, 255, 0.08) 0%, rgba(157, 78, 221, 0.03) 70%, transparent 100%);
+        top: -100px;
+        left: -100px;
+        border-radius: 50%;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      body::after {
+        content: "";
+        position: absolute;
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(157, 78, 221, 0.06) 0%, rgba(0, 210, 255, 0.03) 80%, transparent 100%);
+        bottom: -200px;
+        right: -200px;
+        border-radius: 50%;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      /* Main container layout */
+      .app-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 1.5rem;
+        min-height: 100vh;
+      }
+
+      /* Header Styling */
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--card-border);
+      }
+
+      header h1 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+      }
+
+      .status-pill {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--card-border);
+        border-radius: 100px;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--text-secondary);
+        box-shadow: 0 0 8px var(--text-secondary);
+        transition: all 0.3s ease;
+      }
+
+      .status-indicator.connected {
+        background-color: var(--accent-emerald);
+        box-shadow: 0 0 10px var(--accent-emerald);
+      }
+
+      .status-indicator.connecting {
+        background-color: var(--accent-blue);
+        box-shadow: 0 0 10px var(--accent-blue);
+        animation: pulse 1.5s infinite alternate;
+      }
+
+      /* Dashboard Grid */
+      .dashboard {
+        display: grid;
+        grid-template-columns: 1.1fr 1.9fr;
+        gap: 1.5rem;
+      }
+
+      /* Responsive Layout */
+      @media (max-width: 1024px) {
+        .dashboard {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Glassmorphic Cards */
+      .glass-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .card-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      /* Left Side: Call control & Visualizer */
+      .control-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .visualizer-card {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 280px;
+        position: relative;
+      }
+
+      .visualizer-wrapper {
+        position: relative;
+        width: 180px;
+        height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem 0;
+      }
+
+      /* Glowing orb visualizer */
+      .visualizer-orb {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0, 210, 255, 0.4) 0%, rgba(157, 78, 221, 0.1) 75%, transparent 100%);
+        border: 2px solid rgba(0, 210, 255, 0.2);
+        box-shadow: 0 0 30px rgba(0, 210, 255, 0.1);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Speaking/Thinking visualizer states */
+      .visualizer-wrapper.speaking .visualizer-orb {
+        animation: breathe 1.2s infinite ease-in-out alternate;
+        border-color: rgba(0, 210, 255, 0.6);
+        box-shadow: 0 0 45px rgba(0, 210, 255, 0.4);
+      }
+
+      .visualizer-wrapper.thinking .visualizer-orb {
+        animation: spin 3s infinite linear;
+        border-style: dashed;
+        border-color: rgba(157, 78, 221, 0.6);
+        box-shadow: 0 0 40px rgba(157, 78, 221, 0.3);
+      }
+
+      /* Wave overlay lines */
+      .wave-svg {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        opacity: 0.15;
+        transition: opacity 0.3s;
+      }
+
+      .visualizer-wrapper.speaking .wave-svg {
+        opacity: 0.85;
+      }
+
+      /* Call Action Buttons */
+      .btn-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        width: 100%;
+      }
+
+      button {
+        padding: 0.8rem 1.2rem;
+        font-size: 0.95rem;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .btn-start {
+        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 198, 255, 0.2);
+      }
+
+      .btn-start:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 198, 255, 0.35);
+      }
+
+      .btn-start:disabled {
+        background: #1f2937;
+        color: #4b5563;
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+
+      .btn-end {
+        background: linear-gradient(135deg, var(--accent-rose) 0%, #b91c1c 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(244, 63, 94, 0.2);
+      }
+
+      .btn-end:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(244, 63, 94, 0.35);
+      }
+
+      .btn-end:disabled {
+        background: #1f2937;
+        color: #4b5563;
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+
+      /* Incident Simulation Widget */
+      .simulation-card {
+        padding: 1.2rem;
+      }
+
+      .sim-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+
+      .sim-item {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .sim-command {
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: var(--accent-blue);
+        background: rgba(0, 210, 255, 0.05);
+        padding: 0.3rem 0.5rem;
+        border-radius: 4px;
+        border: 1px dashed rgba(0, 210, 255, 0.2);
+        word-break: break-all;
+      }
+
+      .sim-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .sim-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .btn-sim {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        background: rgba(157, 78, 221, 0.2);
+        color: #e2d2ff;
+        border: 1px solid rgba(157, 78, 221, 0.3);
+      }
+
+      .btn-sim:hover:not(:disabled) {
+        background: rgba(157, 78, 221, 0.35);
+        color: white;
+      }
+
+      .btn-sim:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* Right Side: Conversation Transcripts and Action Logs */
+      .console-panel {
+        display: grid;
+        grid-template-rows: 1.5fr 1fr;
+        gap: 1.5rem;
+        height: calc(100vh - 120px);
+      }
+
+      @media (max-width: 1024px) {
+        .console-panel {
+          height: auto;
+          grid-template-rows: auto auto;
+        }
+      }
+
+      /* Alternating Chat Log Area */
+      .chat-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chat-box {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-height: 250px;
+        max-height: 380px;
+        scroll-behavior: smooth;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      .chat-bubble {
+        max-width: 80%;
+        padding: 0.8rem 1.1rem;
+        border-radius: 16px;
+        line-height: 1.45;
+        font-size: 0.92rem;
+        position: relative;
+        animation: fadeInUp 0.3s ease;
+      }
+
+      .chat-bubble.agent {
+        align-self: flex-start;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--card-border);
+        border-top-left-radius: 4px;
+        color: var(--text-primary);
+      }
+
+      .chat-bubble.user {
+        align-self: flex-end;
+        background: linear-gradient(135deg, rgba(157, 78, 221, 0.25) 0%, rgba(0, 114, 255, 0.25) 100%);
+        border: 1px solid rgba(157, 78, 221, 0.2);
+        border-top-right-radius: 4px;
+        color: var(--text-primary);
+      }
+
+      .chat-sender {
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .chat-bubble.agent .chat-sender {
+        color: var(--accent-blue);
+      }
+
+      .chat-bubble.user .chat-sender {
+        color: #c084fc;
+      }
+
+      .chat-time {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        text-align: right;
+        margin-top: 0.3rem;
+      }
+
+      .chat-placeholder {
+        margin: auto;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        text-align: center;
+        opacity: 0.7;
+      }
+
+      /* Agent Actions Tracker */
+      .actions-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .actions-log {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        min-height: 150px;
+        max-height: 250px;
+      }
+
+      .action-entry {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--card-border);
+        padding: 0.7rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        animation: slideInLeft 0.25s ease;
+      }
+
+      .action-entry.success {
+        border-left: 3px solid var(--accent-emerald);
+      }
+
+      .action-entry.pending {
+        border-left: 3px solid var(--accent-blue);
+      }
+
+      .action-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      .action-badge.open_url {
+        background: rgba(0, 210, 255, 0.15);
+        color: var(--accent-blue);
+      }
+
+      .action-badge.request_confirm {
+        background: rgba(157, 78, 221, 0.15);
+        color: #d8b4fe;
+      }
+
+      .action-details {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .action-time {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+
+      /* Interactive confirmation modal overlay */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .modal-overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .modal-card {
+        background: #111116;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 50px rgba(0, 210, 255, 0.1);
+        border-radius: 20px;
+        width: 90%;
+        max-width: 450px;
+        padding: 2rem;
+        text-align: center;
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .modal-overlay.show .modal-card {
+        transform: scale(1);
+      }
+
+      .modal-icon {
+        font-size: 2.5rem;
+        color: var(--accent-rose);
+        margin-bottom: 0.5rem;
+        animation: pulse-ring 1.5s infinite;
+        align-self: center;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(244, 63, 94, 0.1);
+      }
+
+      .modal-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .modal-prompt {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid var(--card-border);
+      }
+
+      .modal-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 0.5rem;
+      }
+
+      .btn-cancel {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        border: 1px solid var(--card-border);
+      }
+
+      .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .btn-confirm {
+        background: linear-gradient(135deg, var(--accent-rose) 0%, #b91c1c 100%);
+        color: white;
+      }
+
+      .btn-confirm:hover {
+        box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
+      }
+
+      /* Slide-In Summarization Dashboard Modal */
+      .summary-overlay {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 900;
+        transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+        opacity: 0;
+        pointer-events: none;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .summary-overlay.show {
+        right: 0;
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .summary-panel {
+        width: 100%;
+        max-width: 650px;
+        height: 100%;
+        background: #0b0b0f;
+        border-left: 1px solid var(--card-border);
+        box-shadow: -10px 0 40px rgba(0,0,0,0.8);
+        padding: 2.5rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: relative;
+      }
+
+      .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--card-border);
+        padding-bottom: 1.2rem;
+      }
+
+      .summary-header h2 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.6rem;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .btn-close-summary {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid var(--card-border);
+      }
+
+      .btn-close-summary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+      }
+
+      .summary-content {
+        line-height: 1.6;
+        font-size: 0.95rem;
+        color: #d1d5db;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .summary-content h1, 
+      .summary-content h2, 
+      .summary-content h3 {
+        font-family: 'Outfit', sans-serif;
+        margin-top: 1rem;
+        color: var(--text-primary);
+      }
+
+      .summary-content h1 { font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; }
+      .summary-content h2 { font-size: 1.2rem; color: var(--accent-blue); }
+      
+      .summary-content ul {
+        padding-left: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .summary-content blockquote {
+        background: rgba(255,255,255,0.02);
+        border-left: 4px solid var(--accent-purple);
+        padding: 1rem;
+        border-radius: 0 8px 8px 0;
+        font-style: italic;
+      }
+
+      /* Visualizer animations */
+      @keyframes pulse {
+        0% { opacity: 0.4; }
+        100% { opacity: 1; }
+      }
+
+      @keyframes breathe {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.08); }
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes pulse-ring {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.5); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+      }
+    </style>
   </head>
   <body>
-    <h1>Voice Agent Demo</h1>
+    <div class="app-wrapper">
+      <header>
+        <h1>SRE Voice Agent Console</h1>
+        <div class="status-pill">
+          <div class="status-indicator" id="statusIndicator"></div>
+          <span id="statusText">Idle</span>
+        </div>
+      </header>
 
-    <button id="startBtn">Start Call</button>
-    <button id="endBtn" disabled>End Call</button>
+      <main class="dashboard">
+        <!-- Left Column: Audio Wave and Sim Options -->
+        <section class="control-panel">
+          
+          <!-- Visualizer Panel -->
+          <div class="glass-card visualizer-card">
+            <div class="card-title">
+              <span>🎙️ Voice Connection</span>
+            </div>
+            
+            <div class="visualizer-wrapper" id="visualizerWrapper">
+              <!-- Inline multi-wave SVG for speaking animation -->
+              <svg class="wave-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10,100 Q40,40 100,100 T190,100" fill="none" stroke="var(--accent-blue)" stroke-width="2">
+                  <animate attributeName="d" dur="2s" repeatCount="indefinite"
+                    values="M10,100 Q40,40 100,100 T190,100;
+                            M10,100 Q40,140 100,100 T190,100;
+                            M10,100 Q40,40 100,100 T190,100" />
+                </path>
+                <path d="M10,100 Q50,140 100,100 T190,100" fill="none" stroke="var(--accent-purple)" stroke-width="1.5">
+                  <animate attributeName="d" dur="2.5s" repeatCount="indefinite"
+                    values="M10,100 Q50,140 100,100 T190,100;
+                            M10,100 Q50,50 100,100 T190,100;
+                            M10,100 Q50,140 100,100 T190,100" />
+                </path>
+              </svg>
+              
+              <div class="visualizer-orb">
+                <span style="font-size: 2.2rem;">🤖</span>
+              </div>
+            </div>
 
-    <p id="status">Idle</p>
+            <div class="btn-container">
+              <button class="btn-start" id="startBtn">
+                <span class="btn-icon">▶</span> Start Call
+              </button>
+              <button class="btn-end" id="endBtn" disabled>
+                <span class="btn-icon">■</span> End Call
+              </button>
+            </div>
+          </div>
+
+          <!-- SRE Voice Simulator Tools -->
+          <div class="glass-card simulation-card">
+            <div class="card-title">
+              <span>⚡ Voice Commands Guide</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
+              Speak these alerts, or click "Auto-Speak" to have your browser speak it to the agent:
+            </div>
+            
+            <div class="sim-list">
+              <div class="sim-item">
+                <div class="sim-row">
+                  <span class="sim-label">1. Request Runbook</span>
+                  <button class="btn-sim" data-speak="SRE Agent, open the database runbook">Auto-Speak</button>
+                </div>
+                <div class="sim-command">"SRE Agent, open the database runbook"</div>
+              </div>
+
+              <div class="sim-item">
+                <div class="sim-row">
+                  <span class="sim-label">2. Trigger Service Triage</span>
+                  <button class="btn-sim" data-speak="Triage high latency incident on api gateway">Auto-Speak</button>
+                </div>
+                <div class="sim-command">"Triage high latency incident on api gateway"</div>
+              </div>
+
+              <div class="sim-item">
+                <div class="sim-row">
+                  <span class="sim-label">3. Critical Action</span>
+                  <button class="btn-sim" data-speak="Restart the api gateway service container">Auto-Speak</button>
+                </div>
+                <div class="sim-command">"Restart the api gateway service container"</div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Right Column: Interactive Chat and Logs -->
+        <section class="console-panel">
+          
+          <!-- Alternating Transcription Bubble Feed -->
+          <div class="glass-card chat-card">
+            <div class="card-title">
+              <span>💬 Real-time Speech Log</span>
+            </div>
+            <div class="chat-box" id="chatBox">
+              <div class="chat-placeholder" id="chatPlaceholder">
+                Transcripts will appear here in real-time once you start the call and begin speaking...
+              </div>
+            </div>
+          </div>
+
+          <!-- Automated SRE Actions Tracker -->
+          <div class="glass-card actions-card">
+            <div class="card-title">
+              <span>🚀 Agent Triggered Actions</span>
+            </div>
+            <div class="actions-log" id="actionsLog">
+              <div class="chat-placeholder" id="actionsPlaceholder">
+                Actions executed by the agent will be logged here...
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </main>
+    </div>
+
+    <!-- IMMERSIVE CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="confirmModal">
+      <div class="modal-card">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title" id="confirmTitle">Confirm Action</div>
+        <div class="modal-prompt" id="confirmPrompt">Are you sure you want to execute this SRE action? This might modify server state.</div>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="confirmCancelBtn">Decline</button>
+          <button class="btn-confirm" id="confirmOkBtn">Approve Action</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST-CALL SUMMARY DASHBOARD -->
+    <div class="summary-overlay" id="summaryOverlay">
+      <div class="summary-panel">
+        <div class="summary-header">
+          <h2>📊 Interaction Summary</h2>
+          <button class="btn-close-summary" id="closeSummaryBtn">×</button>
+        </div>
+        <div class="summary-content" id="summaryContent">
+          Loading report...
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="/client.js"></script>
   </body>

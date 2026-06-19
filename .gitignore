@@ -1,0 +1,18 @@
+# Python virtual environment
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node.js dependencies
+node_modules/
+
+# Logs
+*.log
+voice_agent.log
+
+# Local environment configuration (Secrets)
+.env
