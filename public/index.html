@@ -130,14 +130,16 @@
       /* Dashboard Grid */
       .dashboard {
         display: grid;
-        grid-template-columns: 1.1fr 1.9fr;
+        grid-template-columns: 1fr 1.25fr 1fr;
         gap: 1.5rem;
+        height: calc(100vh - 120px);
       }
 
       /* Responsive Layout */
-      @media (max-width: 1024px) {
+      @media (max-width: 1200px) {
         .dashboard {
           grid-template-columns: 1fr;
+          height: auto;
         }
       }
 
@@ -357,19 +359,7 @@
       }
 
       /* Right Side: Conversation Transcripts and Action Logs */
-      .console-panel {
-        display: grid;
-        grid-template-rows: 1.5fr 1fr;
-        gap: 1.5rem;
-        height: calc(100vh - 120px);
-      }
 
-      @media (max-width: 1024px) {
-        .console-panel {
-          height: auto;
-          grid-template-rows: auto auto;
-        }
-      }
 
       /* Alternating Chat Log Area */
       .chat-card {
@@ -385,8 +375,7 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        min-height: 250px;
-        max-height: 380px;
+        min-height: 200px;
         scroll-behavior: smooth;
       }
 
@@ -476,7 +465,6 @@
         flex-direction: column;
         gap: 0.6rem;
         min-height: 150px;
-        max-height: 250px;
       }
 
       .action-entry {
@@ -779,29 +767,53 @@
         70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
         100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
       }
+
+      .filter-toggle-btn {
+        transition: all 0.2s ease;
+      }
+      .filter-toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+      }
+      .filter-toggle-btn.active {
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: var(--accent-blue) !important;
+        color: white !important;
+      }
     </style>
   </head>
   <body>
     <div class="app-wrapper">
       <header>
         <h1>SRE Voice Agent Console</h1>
-        <div class="status-pill">
-          <div class="status-indicator" id="statusIndicator"></div>
-          <span id="statusText">Idle</span>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div class="status-pill" style="gap: 0.3rem; padding: 0.5rem 1rem;">
+            <span>👤 Operator:</span>
+            <input type="text" id="sreOperatorInput" placeholder="sre_operator" style="background: transparent; border: none; color: var(--text-primary); font-family: inherit; font-size: 0.85rem; font-weight: 600; width: 100px; outline: none;" />
+          </div>
+
+          <div class="status-pill" style="gap: 0.3rem; padding: 0.5rem 1rem;">
+            <span>🔗 Repo URLs:</span>
+            <input type="text" id="sreRepositoryInput" placeholder="Repo URLs (comma-separated)..." style="background: transparent; border: none; color: var(--text-primary); font-family: inherit; font-size: 0.85rem; font-weight: 600; width: 240px; outline: none;" />
+          </div>
+
+          <div class="status-pill">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span id="statusText">Idle</span>
+          </div>
         </div>
       </header>
 
       <main class="dashboard">
-        <!-- Left Column: Audio Wave and Sim Options -->
-        <section class="control-panel">
+        <!-- Left Column: SRE Voice Connection -->
+        <section class="control-panel" style="height: 100%;">
           
           <!-- Visualizer Panel -->
-          <div class="glass-card visualizer-card">
-            <div class="card-title">
+          <div class="glass-card visualizer-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div class="card-title" style="align-self: flex-start; width: 100%;">
               <span>🎙️ Voice Connection</span>
             </div>
             
-            <div class="visualizer-wrapper" id="visualizerWrapper">
+            <div class="visualizer-wrapper" id="visualizerWrapper" style="margin: 2rem 0;">
               <!-- Inline multi-wave SVG for speaking animation -->
               <svg class="wave-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10,100 Q40,40 100,100 T190,100" fill="none" stroke="var(--accent-blue)" stroke-width="2">
@@ -823,81 +835,77 @@
               </div>
             </div>
 
-            <div class="btn-container">
-              <button class="btn-start" id="startBtn">
+            <div class="btn-container" style="width: 100%; max-width: 320px; display: flex; gap: 1rem;">
+              <button class="btn-start" id="startBtn" style="flex: 1;">
                 <span class="btn-icon">▶</span> Start Call
               </button>
-              <button class="btn-end" id="endBtn" disabled>
+              <button class="btn-end" id="endBtn" disabled style="flex: 1;">
                 <span class="btn-icon">■</span> End Call
               </button>
             </div>
           </div>
-
-          <!-- SRE Voice Simulator Tools -->
-          <div class="glass-card simulation-card">
-            <div class="card-title">
-              <span>⚡ Voice Commands Guide</span>
-            </div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
-              Speak these alerts, or click "Auto-Speak" to have your browser speak it to the agent:
-            </div>
-            
-            <div class="sim-list">
-              <div class="sim-item">
-                <div class="sim-row">
-                  <span class="sim-label">1. Request Runbook</span>
-                  <button class="btn-sim" data-speak="SRE Agent, open the database runbook">Auto-Speak</button>
-                </div>
-                <div class="sim-command">"SRE Agent, open the database runbook"</div>
-              </div>
-
-              <div class="sim-item">
-                <div class="sim-row">
-                  <span class="sim-label">2. Trigger Service Triage</span>
-                  <button class="btn-sim" data-speak="Triage high latency incident on api gateway">Auto-Speak</button>
-                </div>
-                <div class="sim-command">"Triage high latency incident on api gateway"</div>
-              </div>
-
-              <div class="sim-item">
-                <div class="sim-row">
-                  <span class="sim-label">3. Critical Action</span>
-                  <button class="btn-sim" data-speak="Restart the api gateway service container">Auto-Speak</button>
-                </div>
-                <div class="sim-command">"Restart the api gateway service container"</div>
-              </div>
-            </div>
-          </div>
-
         </section>
 
-        <!-- Right Column: Interactive Chat and Logs -->
-        <section class="console-panel">
+        <!-- Center Column: Real-time Speech Log -->
+        <section class="glass-card chat-card" style="height: 100%; display: flex; flex-direction: column; gap: 1rem; overflow: hidden;">
+          <div class="card-title">
+            <span>💬 Real-time Speech Log</span>
+          </div>
+          <div class="chat-box" id="chatBox" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; min-height: 200px; scroll-behavior: smooth;">
+            <div class="chat-placeholder" id="chatPlaceholder">
+              Transcripts will appear here in real-time once you start the call and begin speaking...
+            </div>
+          </div>
+          <div class="chat-input-container" style="display: flex; gap: 0.5rem; padding-top: 0.8rem; border-top: 1px solid var(--card-border);">
+            <input type="text" id="chatInput" placeholder="Type message, paste error logs or URLs..." style="flex: 1; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--card-border); background: rgba(255, 255, 255, 0.03); color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 0.85rem;" />
+            <button id="sendChatBtn" style="padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.85rem; background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%); color: white; font-weight: 600; cursor: pointer; border: none;">Send</button>
+          </div>
+        </section>
+
+        <!-- Right Column: SRE History Hub -->
+        <section class="glass-card history-card" style="height: 100%; display: flex; flex-direction: column; gap: 1rem; overflow: hidden;">
+          <div class="card-title">
+            <span>📚 SRE History Hub</span>
+          </div>
           
-          <!-- Alternating Transcription Bubble Feed -->
-          <div class="glass-card chat-card">
-            <div class="card-title">
-              <span>💬 Real-time Speech Log</span>
+          <!-- Search filters -->
+          <div style="background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--card-border);">
+            <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent-blue);">🔍 Filters</span>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+              <input type="text" id="filterServiceName" placeholder="Service (e.g. api)" style="padding: 0.35rem; border-radius: 6px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.75rem; width: 100%;" />
+              <input type="text" id="filterEnvironment" placeholder="Env" style="padding: 0.35rem; border-radius: 6px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.75rem; width: 100%;" />
             </div>
-            <div class="chat-box" id="chatBox">
-              <div class="chat-placeholder" id="chatPlaceholder">
-                Transcripts will appear here in real-time once you start the call and begin speaking...
+
+            <!-- Date range inputs -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+              <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                <span style="font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; padding-left: 0.1rem;">Start Date</span>
+                <input type="date" id="filterStartDate" style="padding: 0.35rem; border-radius: 6px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.75rem; width: 100%; text-transform: uppercase;" />
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                <span style="font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; padding-left: 0.1rem;">End Date</span>
+                <input type="date" id="filterEndDate" style="padding: 0.35rem; border-radius: 6px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.75rem; width: 100%; text-transform: uppercase;" />
               </div>
             </div>
+
+
+
+            <button id="searchHistoryBtn" style="padding: 0.45rem; font-size: 0.8rem; background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%); color: white; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; text-align: center; width: 100%; margin-top: 0.2rem;">
+              Apply Search Filters
+            </button>
           </div>
 
-          <!-- Automated SRE Actions Tracker -->
-          <div class="glass-card actions-card">
-            <div class="card-title">
-              <span>🚀 Agent Triggered Actions</span>
-            </div>
-            <div class="actions-log" id="actionsLog">
-              <div class="chat-placeholder" id="actionsPlaceholder">
-                Actions executed by the agent will be logged here...
-              </div>
-            </div>
+          <!-- Tabs for index selection -->
+          <div class="devops-tabs" style="display: flex; gap: 0.5rem; margin-top: 0.2rem; border-bottom: 1px solid var(--card-border);">
+            <button class="history-tab active" id="tabConversations" style="flex: 1; padding: 0.4rem; font-size: 0.8rem; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border-radius: 6px 6px 0 0; border: 1px solid var(--card-border); border-bottom: none; cursor: pointer;">Conversations</button>
+            <button class="history-tab" id="tabArtifacts" style="flex: 1; padding: 0.4rem; font-size: 0.8rem; background: transparent; color: var(--text-secondary); border-radius: 6px 6px 0 0; border: 1px solid transparent; border-bottom: none; cursor: pointer;">Artifacts</button>
           </div>
 
+          <!-- Scrollable index lists -->
+          <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding-right: 0.2rem;" id="historyListContent">
+            <div style="color: var(--text-secondary); font-size: 0.8rem; text-align: center; margin-top: 1rem;">Loading history...</div>
+          </div>
         </section>
       </main>
     </div>
@@ -915,18 +923,52 @@
       </div>
     </div>
 
-    <!-- POST-CALL SUMMARY DASHBOARD -->
-    <div class="summary-overlay" id="summaryOverlay">
-      <div class="summary-panel">
+
+
+    <!-- DEVOPS GENERATED ARTIFACTS DRAWER -->
+    <div class="summary-overlay" id="devopsOverlay">
+      <div class="summary-panel devops-panel" style="max-width: 800px;">
         <div class="summary-header">
-          <h2>📊 Interaction Summary</h2>
-          <button class="btn-close-summary" id="closeSummaryBtn">×</button>
+          <h2>🛠️ SRE Artifact Viewer</h2>
+          
+          <!-- Version selector picker dropdown -->
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-right: 1rem;">
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Ver:</span>
+            <select id="artifactVersionSelect" style="padding: 0.3rem 0.5rem; border-radius: 6px; border: 1px solid var(--card-border); background: #121218; color: white; font-size: 0.8rem; outline: none; cursor: pointer; display: none;">
+              <option value="1">v1 (Active)</option>
+            </select>
+          </div>
+
+          <button class="btn-close-summary" id="closeDevopsBtn">×</button>
         </div>
-        <div class="summary-content" id="summaryContent">
-          Loading report...
+        
+        <div class="devops-actions-bar" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+          <button id="saveWorkspaceBtn" class="btn-start" style="background: linear-gradient(135deg, var(--accent-emerald) 0%, #047857 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);">
+            💾 Save to Workspace
+          </button>
+          <button id="downloadZipBtn" class="btn-sim" style="background: rgba(0, 210, 255, 0.15); color: var(--accent-blue); border: 1px solid rgba(0, 210, 255, 0.3); font-weight: 600; padding: 0.8rem 1.2rem; border-radius: 12px; font-size: 0.95rem;">
+            📦 Download ZIP
+          </button>
+        </div>
+
+        <div class="devops-tabs" style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
+          <button class="devops-tab active" data-tab="Dockerfile" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border-radius: 8px 8px 0 0; border: 1px solid var(--card-border); border-bottom: none; cursor: pointer;">Dockerfile</button>
+          <button class="devops-tab" data-tab="docker-compose.yml" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: transparent; color: var(--text-secondary); border-radius: 8px 8px 0 0; border: 1px solid transparent; border-bottom: none; cursor: pointer;">docker-compose.yml</button>
+          <button class="devops-tab" data-tab=".dockerignore" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: transparent; color: var(--text-secondary); border-radius: 8px 8px 0 0; border: 1px solid transparent; border-bottom: none; cursor: pointer;">.dockerignore</button>
+          <button class="devops-tab" data-tab=".github/workflows/ci.yml" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: transparent; color: var(--text-secondary); border-radius: 8px 8px 0 0; border: 1px solid transparent; border-bottom: none; cursor: pointer;">ci.yml</button>
+        </div>
+
+        <div class="devops-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #050507; border: 1px solid var(--card-border); border-top: none; border-radius: 0 0 8px 8px; padding: 1rem; height: 350px;">
+          <pre style="margin: 0; overflow: auto; height: 100%;"><code id="devopsCode" style="font-family: monospace; font-size: 0.9rem; color: #a7f3d0; line-height: 1.5; white-space: pre-wrap; display: block;">Awaiting files...</code></pre>
         </div>
       </div>
     </div>
+
+
+
+    <!-- JSZip and FileSaver scripts from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <script type="module" src="/client.js"></script>
   </body>
